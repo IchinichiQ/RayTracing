@@ -66,6 +66,20 @@ public class Pixel
         return new Pixel(newR, newG, newB, this.a);
     }
 
+//    public Pixel scale(int rgb)
+//    {
+//        // Fix when scaling color 0, 0, 0 with any other or vice versa
+//        double scaleR = Math.max(1, (double) ((rgb >> 16) & 0xFF) / 0xFF);
+//        double scaleG = Math.max(1, (double) ((rgb >> 8) & 0xFF) / 0xFF);
+//        double scaleB = Math.max(1, (double) (rgb & 0xFF) / 0xFF);
+//
+//        int newR = (int) (Math.max(1, this.r) * (double) scaleR);
+//        int newG = (int) (Math.max(1, this.g) * (double) scaleG);
+//        int newB = (int) (Math.max(1, this.b) * (double) scaleB);
+//
+//        return new Pixel(newR, newG, newB, this.a);
+//    }
+
     public int getRGB()
     {
         return (a << 24) | (r << 16) | (g << 8) | b;

@@ -11,7 +11,7 @@ import java.awt.*;
 
 public class RayTracer
 {
-    private static final boolean SHADOWS = true;
+    private static final boolean SHADOWS = false;
 
     private static final Pixel EMPTY_PIXEL = new Pixel(77, 143, 172);
 
@@ -31,7 +31,6 @@ public class RayTracer
 
     public void trace(Canvas canvas, Vector cameraPosition, Matrix3X3 cameraRotation)
     {
-        int i = 0;
         int canvasHeight = canvas.getHeight();
         int canvasWidth = canvas.getWidth();
 
@@ -95,9 +94,8 @@ public class RayTracer
             matter = new ColorMatter(Color.BLACK, 1.0, 0.0, 0);
         }
 
-        u = v.unit();
         Pixel pixel = new Pixel(0, 0, 0);
-        pixel = applyLight(u, p, n, closest, matter);
+        pixel = applyLight(v.unit(), p, n, closest, matter);
 
         pixel = pixel.scale(matter.getColor());
 
@@ -139,7 +137,8 @@ public class RayTracer
             // TODO: Hardcoded point light
             Vector l = ((PointLight) light).getPosition().subtract(p);
 
-            if (!SHADOWS || !intersects(p, l, closest))
+            // If not in shadow
+            if (!intersects(p, l, closest, 1.0))
             {
                 l = l.unit();
 
@@ -194,11 +193,11 @@ public class RayTracer
      *            the scene object to ignore, or {@code null} to consider all scene objects
      * @return {@code true} if the specified ray intersects a scene object, {@code false} otherwise
      */
-    private boolean intersects(Vector u, Vector v, Traceable ignore)
+    private boolean intersects(Vector u, Vector v, Traceable ignore, double tMax)
     {
         for (Traceable object : objects)
         {
-            if (object != ignore && !Double.isNaN(object.getIntersection(u, v)))
+            if (object != ignore && object.getIntersection(u, v) < tMax)
             {
                 return true;
             }

@@ -47,17 +47,20 @@ public class MainPanel extends JPanel {
         Plane ground = new Plane(new Vector(), new Vector(0, 1, 0), new ColorMatter(Color.GREEN, 0, 0, 0));
         scene.addObject(ground);
 
-        Sphere s1 = new Sphere(new Vector(0, 3, 3), 1, new ColorMatter(Color.RED, 0, 0.0, 50));
+        Sphere s1 = new Sphere(new Vector(0, 3, 3), 1, new ColorMatter(Color.RED, 50, 0.1, 50));
         scene.addObject(s1);
 
         Sphere s2 = new Sphere(new Vector(0, 300, 2000), 100, new ColorMatter(Color.YELLOW, 50, 1.0, 0));
         //scene.addObject(s2);
 
-        Sphere s3 = new Sphere(new Vector(2, 2, 2), 0.5, new ColorMatter(Color.BLUE, 0, 1, 50));
+        Sphere s3 = new Sphere(new Vector(2, 2, 2), 0.5, new ColorMatter(Color.BLUE, 50, 0.5, 50));
         scene.addObject(s3);
 
-        PointLight l1 = new PointLight(new Vector(1, 2, 0), 1.0, Color.DARK_GRAY);
+        PointLight l1 = new PointLight(new Vector(0, 5, 0), 1.0, Color.DARK_GRAY);
         scene.addLight(l1);
+
+        PointLight l2 = new PointLight(new Vector(0, 8, 0), 1.0, Color.darkGray);
+        scene.addLight(l2);
 
         tracer = new RayTracer(scene);
 
