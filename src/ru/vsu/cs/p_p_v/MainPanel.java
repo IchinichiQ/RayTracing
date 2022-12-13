@@ -19,6 +19,7 @@ import static java.awt.event.KeyEvent.*;
 public class MainPanel extends JPanel {
     private final RayTracer tracer;
     Vector cameraPosition;
+    Matrix3X3 cameraRotation;
 
     private Image image = null;
     private long renderTimeMs = 0;
@@ -37,41 +38,46 @@ public class MainPanel extends JPanel {
         });
 
         Scene scene = new Scene();
-        cameraPosition = new Vector(200, 100, 0);
+        cameraPosition = new Vector(0, 1, 0);
+
+        cameraRotation = new Matrix3X3(new double[][] {new double[] {1, 0, 0},
+                new double[] {0, 1, 0},
+                new double[] {0, 0, 1}});
 
         Plane ground = new Plane(new Vector(), new Vector(0, 1, 0), new ColorMatter(Color.GREEN, 0, 0, 0));
         scene.addObject(ground);
 
-        Sphere s1 = new Sphere(new Vector(0, 300, 2000), 150, new ColorMatter(Color.RED, 0, 0.5, 50));
+        Sphere s1 = new Sphere(new Vector(0, 3, 3), 1, new ColorMatter(Color.RED, 0, 0.0, 50));
         scene.addObject(s1);
 
         Sphere s2 = new Sphere(new Vector(0, 300, 2000), 100, new ColorMatter(Color.YELLOW, 50, 1.0, 0));
-        scene.addObject(s2);
+        //scene.addObject(s2);
 
-        Sphere s3 = new Sphere(new Vector(0, 300, 2000), 50, new ColorMatter(Color.BLUE, 0, 0.5, 50));
-        //scene.addObject(s3);
+        Sphere s3 = new Sphere(new Vector(2, 2, 2), 0.5, new ColorMatter(Color.BLUE, 0, 1, 50));
+        scene.addObject(s3);
 
-        PointLight l1 = new PointLight(new Vector(-500, 500, 1000), 1.0, Color.DARK_GRAY);
+        PointLight l1 = new PointLight(new Vector(1, 2, 0), 1.0, Color.DARK_GRAY);
         scene.addLight(l1);
 
         tracer = new RayTracer(scene);
 
+        double delta = 0.25;
         this.addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
                 switch (e.getKeyCode()) {
-                    case VK_W -> {changeCameraPosition(0, 0, 50);}
-                    case VK_S -> {changeCameraPosition(0, 0, -50);}
-                    case VK_A -> {changeCameraPosition(50, 0, 0);}
-                    case VK_D -> {changeCameraPosition(-50, 0, 0);}
-                    case VK_Q -> {changeCameraPosition(0, 50, 0);}
-                    case VK_E -> {changeCameraPosition(0, -50, 0);}
+                    case VK_W -> {changeCameraPosition(0, 0, delta);}
+                    case VK_S -> {changeCameraPosition(0, 0, -delta);}
+                    case VK_A -> {changeCameraPosition(-delta, 0, 0);}
+                    case VK_D -> {changeCameraPosition(delta, 0, 0);}
+                    case VK_Q -> {changeCameraPosition(0, delta, 0);}
+                    case VK_E -> {changeCameraPosition(0, -delta, 0);}
                 }
             }
         });
     }
 
-    private void changeCameraPosition(int deltaX, int deltaY, int deltaZ) {
+    private void changeCameraPosition(double deltaX, double deltaY, double deltaZ) {
         cameraPosition = cameraPosition.add(new Vector(deltaX, deltaY, deltaZ));
         createImage();
         repaint();
@@ -82,7 +88,7 @@ public class MainPanel extends JPanel {
         Canvas canvas = new Canvas(size.width, size.height);
 
         long start = System.nanoTime();
-        tracer.trace(canvas, cameraPosition);
+        tracer.trace(canvas, cameraPosition, cameraRotation);
         long end = System.nanoTime();
         renderTimeMs = TimeUnit.NANOSECONDS.toMillis(end - start);
 

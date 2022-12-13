@@ -14,8 +14,15 @@ public class Canvas {
         this.pixels = new int[width * height];
     }
 
-    public void setPixel(int i, int color) {
-        pixels[i] = color;
+    public void setPixel(int x, int y, int color) {
+        x = width / 2 + x;
+        y = height / 2 - y - 1;
+
+        if (x < 0 || x >= width || y < 0 || y >= height) {
+            return;
+        }
+
+        pixels[x + width * y] = color;
     }
 
     public int getPixel(int i) {

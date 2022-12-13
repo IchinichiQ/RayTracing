@@ -11,7 +11,7 @@ import java.awt.*;
 
 public class RayTracer
 {
-    private static final boolean SHADOWS = false;
+    private static final boolean SHADOWS = true;
 
     private static final Pixel EMPTY_PIXEL = new Pixel(77, 143, 172);
 
@@ -29,22 +29,29 @@ public class RayTracer
         lights = this.scene.getLights().toArray(new Light[0]);
     }
 
-    public void trace(Canvas canvas, Vector cameraPosition)
+    public void trace(Canvas canvas, Vector cameraPosition, Matrix3X3 cameraRotation)
     {
         int i = 0;
+        int canvasHeight = canvas.getHeight();
+        int canvasWidth = canvas.getWidth();
 
-        for (double y = 0; y < canvas.getHeight(); y++)
+        for (int y = -canvasHeight / 2; y < canvasHeight / 2; y++)
         {
-            for (double x = 0; x < canvas.getWidth(); x++)
+            for (int x = -canvasWidth / 2; x < canvasWidth / 2; x++)
             {
                 Vector u = new Vector(cameraPosition);
                 // Z - fov
                 // x -
-                Vector v = new Vector (x - cameraPosition.getX(), cameraPosition.getY() - y, 500);
+                Vector v = canvasToViewport(x, y, canvasHeight, canvasWidth);
+                //v = cameraRotation.multiply(v);
 
-                canvas.setPixel(i++, getPixel(u, v, null, 3).getRGB());
+                canvas.setPixel(x, y, getPixel(u, v, null, 3).getRGB());
             }
         }
+    }
+
+    private Vector canvasToViewport(double x, double y, int cHeight, int cWidth) {
+        return new Vector(x / cWidth, y /  cHeight, 1);
     }
 
     private Pixel getPixel(Vector u, Vector v, Traceable current, int depth)
