@@ -30,7 +30,7 @@ public class RayTracer
         lights = this.scene.getLights().toArray(new Light[0]);
     }
 
-    public void trace(Canvas canvas, Vector cameraPosition, Matrix3X3 cameraRotation, int depth)
+    public void trace(Canvas canvas, Camera camera, int depth)
     {
         int canvasHeight = canvas.getHeight();
         int canvasWidth = canvas.getWidth();
@@ -39,10 +39,11 @@ public class RayTracer
         {
             for (int x = -canvasWidth / 2; x < canvasWidth / 2; x++)
             {
-                Vector u = new Vector(cameraPosition);
+                Vector u = new Vector(camera.getPosition());
                 // Z - fov
                 // x -
                 Vector v = canvasToViewport(x, y, canvasHeight, canvasWidth);
+                v = v.rotateYP(camera.getYaw(), camera.getPitch());
                 //v = cameraRotation.multiply(v);
 
                 canvas.setPixel(x, y, getPixel(u, v, null, depth).getRGB());
@@ -81,12 +82,12 @@ public class RayTracer
         }
 
         // p = u + v t_min
-        Vector p = v.scale(minT);
+        Vector p = v.multiply(minT);
         p = p.add(u);
 
         // n = unit normal at p
         Vector n = closest.getNormal(p);
-        n = n.unit();
+        n = n.normalize();
 
         Matter matter;
         if (closest instanceof Material) {
@@ -96,13 +97,13 @@ public class RayTracer
         }
 
         Pixel pixel = new Pixel(0, 0, 0);
-        pixel = applyLight(v.unit(), p, n, closest, matter);
+        pixel = applyLight(v.normalize(), p, n, closest, matter);
 
         pixel = pixel.scale(matter.getColor());
 
-        double shine = matter.getShine();
+        double reflective = matter.getReflective();
 
-        if (shine == 0 || depth == 0)
+        if (reflective == 0 || depth == 0)
         {
             return pixel;
         }
@@ -113,15 +114,14 @@ public class RayTracer
         // v = v - (2*v.n)n
         v = v.subtract(2 * v.dot(n), n);
 
-        Pixel newPixel = new Pixel(pixel.getRGB());
         int nearRGB = getPixel(u, v, closest, depth - 1).getRGB();
-        if (Math.abs(shine - 1.0) <= 0.0001) {
-            newPixel = new Pixel(nearRGB);
-        } else {
-            newPixel = newPixel.mix(nearRGB, shine);
-        }
 
-        return newPixel;
+        pixel = pixel.multiply(1.0 - reflective);
+        Pixel nearPixel = new Pixel(nearRGB).multiply(reflective);
+
+        pixel = pixel.mix(nearPixel.getRGB(), 1.0);
+
+        return pixel;
     }
 
     private Pixel applyLight(Vector u, Vector p, Vector n, Traceable closest, Matter matter)
@@ -145,7 +145,7 @@ public class RayTracer
             // If not in shadow
             if (!intersects(p, l, closest, 1.0))
             {
-                l = l.unit();
+                l = l.normalize();
 
                 pixel = applyDiffuse(pixel, light, n, l);
                 pixel = applyPhong(pixel, light, phong, u, n, l);

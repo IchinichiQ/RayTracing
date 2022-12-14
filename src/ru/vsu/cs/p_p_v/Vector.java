@@ -34,12 +34,12 @@ public class Vector {
         return new Vector(x - (s * other.getX()), y - (s * other.getY()), z - (s * other.getZ()));
     }
 
-    public Vector scale(double s)
+    public Vector multiply(double s)
     {
         return new Vector(x * s, y * s, z * s);
     }
 
-    public Vector unit()
+    public Vector normalize()
     {
         double mod = Math.sqrt(x * x + y * y + z * z);
 
@@ -54,6 +54,22 @@ public class Vector {
     public double dot(Vector other)
     {
         return x * other.x + y * other.y + z * other.z;
+    }
+
+    public Vector rotateYP(double yaw, double pitch) {
+        // Convert to radians
+        double yawRads = Math.toRadians(yaw);
+        double pitchRads = Math.toRadians(pitch);
+
+        // Step one: Rotate around X axis (pitch)
+        float newY = (float) (y*Math.cos(pitchRads) - z*Math.sin(pitchRads));
+        float newZ = (float) (y*Math.sin(pitchRads) + z*Math.cos(pitchRads));
+
+        // Step two: Rotate around the Y axis (yaw)
+        float newX = (float) (x*Math.cos(yawRads) + newZ*Math.sin(yawRads));
+        newZ = (float) (-x*Math.sin(yawRads) + newZ*Math.cos(yawRads));
+
+        return new Vector(newX, newY, newZ);
     }
 
     public double getX() {

@@ -11,6 +11,6 @@ public class MainWindow extends JFrame {
 
         setSize(320, 256);
 
-        this.add(new MainPanel());
+        this.add(new MainPanel(this));
     }
 }

@@ -7,7 +7,7 @@ public interface Matter {
 
     double getOpacity();
 
-    double getShine();
+    double getReflective();
 
     int getPhong();
 }

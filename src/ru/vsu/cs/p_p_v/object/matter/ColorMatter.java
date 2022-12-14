@@ -5,13 +5,13 @@ import java.awt.*;
 public class ColorMatter implements Matter {
     private Color color;
     private double opacity;
-    private double shine;
+    private double reflective;
     private int phong;
 
-    public ColorMatter(Color color, double opacity, double shine, int phong) {
+    public ColorMatter(Color color, double opacity, double reflective, int phong) {
         this.color = color;
         this.opacity = opacity;
-        this.shine = shine;
+        this.reflective = reflective;
         this.phong = phong;
     }
 
@@ -26,8 +26,8 @@ public class ColorMatter implements Matter {
     }
 
     @Override
-    public double getShine() {
-        return shine;
+    public double getReflective() {
+        return reflective;
     }
 
     @Override

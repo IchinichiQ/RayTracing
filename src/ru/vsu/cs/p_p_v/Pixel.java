@@ -66,6 +66,10 @@ public class Pixel
         return new Pixel(newR, newG, newB, this.a);
     }
 
+    public Pixel multiply(double value) {
+        return new Pixel((int) (r * value), (int) (g * value), (int) (b * value), this.a);
+    }
+
 //    public Pixel scale(int rgb)
 //    {
 //        // Fix when scaling color 0, 0, 0 with any other or vice versa
