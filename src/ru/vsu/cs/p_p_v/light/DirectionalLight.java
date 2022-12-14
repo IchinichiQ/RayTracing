@@ -5,7 +5,7 @@ import ru.vsu.cs.p_p_v.object.Locatable;
 
 import java.awt.*;
 
-public class DirectionalLight extends AbstractLight{
+public class DirectionalLight extends AbstractLight {
     private Vector direction;
 
     public DirectionalLight(Vector direction, double intensity, Color color) {

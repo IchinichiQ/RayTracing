@@ -1,5 +1,6 @@
 package ru.vsu.cs.p_p_v;
 
+import ru.vsu.cs.p_p_v.light.AmbientLight;
 import ru.vsu.cs.p_p_v.light.Light;
 import ru.vsu.cs.p_p_v.light.PointLight;
 import ru.vsu.cs.p_p_v.object.Material;
@@ -29,7 +30,7 @@ public class RayTracer
         lights = this.scene.getLights().toArray(new Light[0]);
     }
 
-    public void trace(Canvas canvas, Vector cameraPosition, Matrix3X3 cameraRotation)
+    public void trace(Canvas canvas, Vector cameraPosition, Matrix3X3 cameraRotation, int depth)
     {
         int canvasHeight = canvas.getHeight();
         int canvasWidth = canvas.getWidth();
@@ -44,13 +45,13 @@ public class RayTracer
                 Vector v = canvasToViewport(x, y, canvasHeight, canvasWidth);
                 //v = cameraRotation.multiply(v);
 
-                canvas.setPixel(x, y, getPixel(u, v, null, 3).getRGB());
+                canvas.setPixel(x, y, getPixel(u, v, null, depth).getRGB());
             }
         }
     }
 
     private Vector canvasToViewport(double x, double y, int cHeight, int cWidth) {
-        return new Vector(x / cWidth, y /  cHeight, 1);
+        return new Vector((x / cWidth) * ((double) cWidth / cHeight), y /  cHeight, 1);
     }
 
     private Pixel getPixel(Vector u, Vector v, Traceable current, int depth)
@@ -125,14 +126,18 @@ public class RayTracer
 
     private Pixel applyLight(Vector u, Vector p, Vector n, Traceable closest, Matter matter)
     {
-        // ambient light
-        Pixel pixel = new Pixel(100, 100, 100, 255);
+        Pixel pixel = new Pixel(0, 0, 0, 255);
 
         // set u = unit(v) for phong
         int phong = matter.getPhong();
 
         for (Light light : lights)
         {
+            if (light instanceof AmbientLight) {
+                pixel = pixel.mix(light.getColor(), light.getIntensity());
+                continue;
+            }
+
             // l = l0 - p;
             // TODO: Hardcoded point light
             Vector l = ((PointLight) light).getPosition().subtract(p);
@@ -180,19 +185,6 @@ public class RayTracer
         return pixel;
     }
 
-    /**
-     * Returns whether the specified ray intersects any scene object, optionally ignoring a specified one.
-     * <p>
-     * The ray is specified by the line <b>p</b> = <b>u</b> + <b>v</b><i>t</i>.
-     *
-     * @param u
-     *            the vector <b>u</b> of the ray
-     * @param v
-     *            the vector <b>v</b> of the ray
-     * @param ignore
-     *            the scene object to ignore, or {@code null} to consider all scene objects
-     * @return {@code true} if the specified ray intersects a scene object, {@code false} otherwise
-     */
     private boolean intersects(Vector u, Vector v, Traceable ignore, double tMax)
     {
         for (Traceable object : objects)

@@ -1,5 +1,6 @@
 package ru.vsu.cs.p_p_v;
 
+import ru.vsu.cs.p_p_v.light.AmbientLight;
 import ru.vsu.cs.p_p_v.light.PointLight;
 import ru.vsu.cs.p_p_v.object.Plane;
 import ru.vsu.cs.p_p_v.object.Sphere;
@@ -24,10 +25,11 @@ public class MainPanel extends JPanel {
     private Image image = null;
     private long renderTimeMs = 0;
 
+    private int reflectionDepth = 3;
+
     public MainPanel() {
         this.setFocusable(true);
         this.requestFocusInWindow();
-
         addComponentListener(new ComponentAdapter()
         {
             @Override
@@ -40,9 +42,9 @@ public class MainPanel extends JPanel {
         Scene scene = new Scene();
         cameraPosition = new Vector(0, 1, 0);
 
-        cameraRotation = new Matrix3X3(new double[][] {new double[] {1, 0, 0},
+        cameraRotation = new Matrix3X3(new double[][] {new double[] {0.7071, 0, -0.7071},
                 new double[] {0, 1, 0},
-                new double[] {0, 0, 1}});
+                new double[] {0.7071, 0, 0.7071}});
 
         Plane ground = new Plane(new Vector(), new Vector(0, 1, 0), new ColorMatter(Color.GREEN, 0, 0, 0));
         scene.addObject(ground);
@@ -53,7 +55,7 @@ public class MainPanel extends JPanel {
         Sphere s2 = new Sphere(new Vector(0, 300, 2000), 100, new ColorMatter(Color.YELLOW, 50, 1.0, 0));
         //scene.addObject(s2);
 
-        Sphere s3 = new Sphere(new Vector(2, 2, 2), 0.5, new ColorMatter(Color.BLUE, 50, 0.5, 50));
+        Sphere s3 = new Sphere(new Vector(2, 2, 2), 0.5, new ColorMatter(Color.BLUE, 50, 1.0, 50));
         scene.addObject(s3);
 
         PointLight l1 = new PointLight(new Vector(0, 5, 0), 1.0, Color.DARK_GRAY);
@@ -61,6 +63,9 @@ public class MainPanel extends JPanel {
 
         PointLight l2 = new PointLight(new Vector(0, 8, 0), 1.0, Color.darkGray);
         scene.addLight(l2);
+
+        AmbientLight l3 = new AmbientLight(1.0, new Color(100, 100, 100));
+        scene.addLight(l3);
 
         tracer = new RayTracer(scene);
 
@@ -75,6 +80,8 @@ public class MainPanel extends JPanel {
                     case VK_D -> {changeCameraPosition(delta, 0, 0);}
                     case VK_Q -> {changeCameraPosition(0, delta, 0);}
                     case VK_E -> {changeCameraPosition(0, -delta, 0);}
+                    case VK_X -> {changeReflectionDepth(1);}
+                    case VK_Z -> {changeReflectionDepth(-1);}
                 }
             }
         });
@@ -82,6 +89,14 @@ public class MainPanel extends JPanel {
 
     private void changeCameraPosition(double deltaX, double deltaY, double deltaZ) {
         cameraPosition = cameraPosition.add(new Vector(deltaX, deltaY, deltaZ));
+
+        createImage();
+        repaint();
+    }
+
+    private void changeReflectionDepth(int delta) {
+        reflectionDepth = Math.max(0, reflectionDepth + delta);
+
         createImage();
         repaint();
     }
@@ -91,7 +106,7 @@ public class MainPanel extends JPanel {
         Canvas canvas = new Canvas(size.width, size.height);
 
         long start = System.nanoTime();
-        tracer.trace(canvas, cameraPosition, cameraRotation);
+        tracer.trace(canvas, cameraPosition, cameraRotation, reflectionDepth);
         long end = System.nanoTime();
         renderTimeMs = TimeUnit.NANOSECONDS.toMillis(end - start);
 
@@ -107,11 +122,13 @@ public class MainPanel extends JPanel {
 
         g.drawImage(image, 0, 0, null);
 
-        String performanceText = String.format("%d x %d @ %d ms (%.1f fps)", image.getWidth(null), image.getHeight(null), renderTimeMs, 1000.0 / renderTimeMs);
-        String positionText = String.format("x: %.1f y: %.1f z: %.1f", cameraPosition.getX(), cameraPosition.getY(), cameraPosition.getZ());
+        String performanceInfo = String.format("%d x %d @ %d ms (%.1f fps)", image.getWidth(null), image.getHeight(null), renderTimeMs, 1000.0 / renderTimeMs);
+        String positionInfo = String.format("x: %.1f y: %.1f z: %.1f", cameraPosition.getX(), cameraPosition.getY(), cameraPosition.getZ());
+        String renderInfo = String.format("Reflection depth: %d", reflectionDepth);
 
         g.setColor(Color.WHITE);
-        g.drawString(performanceText, 0, 12);
-        g.drawString(positionText, 0, 24);
+        g.drawString(performanceInfo, 0, 12);
+        g.drawString(positionInfo, 0, 24);
+        g.drawString(renderInfo, 0, 36);
     }
 }
