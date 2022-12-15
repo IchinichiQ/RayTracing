@@ -159,10 +159,12 @@ public class RayTracer
     {
         // diffuse reflection
         double d = n.dot(l);
+        Pixel lightColorAdjusted = new Pixel(light.getColor());
+        lightColorAdjusted = lightColorAdjusted.multiply(light.getIntensity());
 
         if (d > 0)
         {
-            pixel = pixel.mix(light.getColor(), d);
+            pixel = pixel.mix(lightColorAdjusted.getColor(), d);
         }
 
         return pixel;
@@ -171,6 +173,8 @@ public class RayTracer
     private Pixel applyPhong(Pixel pixel, Light light, int phong, Vector u, Vector n, Vector l)
     {
         // phong illumination
+        Pixel lightColorAdjusted = new Pixel(light.getColor());
+        lightColorAdjusted = lightColorAdjusted.multiply(light.getIntensity());
 
         if (phong > 0)
         {
@@ -178,7 +182,7 @@ public class RayTracer
 
             if (d > 0)
             {
-                pixel = pixel.mix(light.getColor(), FastMath.pow(d, phong));
+                pixel = pixel.mix(lightColorAdjusted.getColor(), FastMath.pow(d, phong));
             }
         }
 

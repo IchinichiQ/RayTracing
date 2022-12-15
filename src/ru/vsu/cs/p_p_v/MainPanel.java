@@ -58,12 +58,12 @@ public class MainPanel extends JPanel {
         scene.addObject(s3);
 
         PointLight l1 = new PointLight(new Vector(0, 5, 0), 1.0, Color.DARK_GRAY);
-        scene.addLight(l1);
+        //scene.addLight(l1);
 
-        PointLight l2 = new PointLight(new Vector(0, 8, 0), 1.0, Color.darkGray);
+        PointLight l2 = new PointLight(new Vector(0, 8, 0), 0.4, Color.WHITE);
         scene.addLight(l2);
 
-        AmbientLight l3 = new AmbientLight(1.0, new Color(100, 100, 100));
+        AmbientLight l3 = new AmbientLight(0.3, Color.WHITE);
         scene.addLight(l3);
 
         tracer = new RayTracer(scene);
