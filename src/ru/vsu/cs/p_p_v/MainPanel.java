@@ -33,7 +33,7 @@ public class MainPanel extends JPanel {
 
         this.parentFrame = parent;
 
-        addComponentListener(new ComponentAdapter()
+        this.addComponentListener(new ComponentAdapter()
         {
             @Override
             public void componentResized(ComponentEvent event)
@@ -45,10 +45,10 @@ public class MainPanel extends JPanel {
         Scene scene = new Scene();
         camera = new Camera(new Vector(0, 1, 0));
 
-        Plane ground = new Plane(new Vector(), new Vector(0, 1, 0), new ColorMatter(Color.GREEN, 0, 0, 0));
+        Plane ground = new Plane(new Vector(), new Vector(0, 1, 0), new ColorMatter(new Color(100, 230, 100), 0, 0, 0));
         scene.addObject(ground);
 
-        Sphere s1 = new Sphere(new Vector(0, 3, 3), 1, new ColorMatter(Color.RED, 50, 0.1, 50));
+        Sphere s1 = new Sphere(new Vector(0, 3, 3), 1, new ColorMatter(Color.WHITE, 50, 0.0, 50));
         scene.addObject(s1);
 
         Sphere s2 = new Sphere(new Vector(0, 300, 2000), 100, new ColorMatter(Color.YELLOW, 50, 1.0, 0));
@@ -57,13 +57,13 @@ public class MainPanel extends JPanel {
         Sphere s3 = new Sphere(new Vector(2, 2, 2), 0.5, new ColorMatter(Color.BLUE, 50, 0.9, 50));
         scene.addObject(s3);
 
-        PointLight l1 = new PointLight(new Vector(0, 5, 0), 1.0, Color.DARK_GRAY);
-        //scene.addLight(l1);
+        PointLight l1 = new PointLight(new Vector(0, 4, 1), 1.0, Color.RED);
+        scene.addLight(l1);
 
-        PointLight l2 = new PointLight(new Vector(0, 8, 0), 0.4, Color.WHITE);
+        PointLight l2 = new PointLight(new Vector(0, 8, 0), 1.0, Color.GREEN);
         scene.addLight(l2);
 
-        AmbientLight l3 = new AmbientLight(0.3, Color.WHITE);
+        AmbientLight l3 = new AmbientLight(0.2, Color.WHITE);
         scene.addLight(l3);
 
         tracer = new RayTracer(scene);
@@ -81,6 +81,10 @@ public class MainPanel extends JPanel {
                     case VK_SHIFT -> {changeCameraPosition(new Vector(0, -delta, 0), false);}
                     case VK_X -> {changeReflectionDepth(1);}
                     case VK_Z -> {changeReflectionDepth(-1);}
+                    case VK_R -> {
+                        createImage();
+                        repaint();
+                    }
                 }
             }
         });
@@ -88,15 +92,14 @@ public class MainPanel extends JPanel {
         MouseAdapter mouseAdapter = new MouseAdapter() {
             private boolean mouseCaptured = false;
             private final double mouseSensitivity = 0.3;
-            private int screenCenterX, screenCenterY;
+            private int windowCenterX, windowCenterY;
             private int prevX, prevY;
 
             private void moveCursorToScreenCenter() {
-                Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-                screenCenterX = screenSize.width / 2;
-                screenCenterY = screenSize.height / 2;
+                windowCenterX = parentFrame.getLocationOnScreen().x + parentFrame.getWidth() / 2;
+                windowCenterY = parentFrame.getLocationOnScreen().y + parentFrame.getHeight() / 2;
 
-                moveCursorToPoint(screenCenterX, screenCenterY);
+                moveCursorToPoint(windowCenterX, windowCenterY);
             }
 
             private void moveCursorToPoint(int x, int y) {
@@ -137,8 +140,8 @@ public class MainPanel extends JPanel {
             @Override
             public void mouseMoved(MouseEvent e) {
                 if (mouseCaptured) {
-                    int deltaX = e.getXOnScreen() - screenCenterX;
-                    int deltaY = e.getYOnScreen() - screenCenterY;
+                    int deltaX = e.getXOnScreen() - windowCenterX;
+                    int deltaY = e.getYOnScreen() - windowCenterY;
 
                     // x - yaw
                     // y - pitch
@@ -163,8 +166,8 @@ public class MainPanel extends JPanel {
         this.addMouseListener(mouseAdapter);
     }
 
-    private void changeCameraPosition(Vector delta, boolean rotate) {
-        if (rotate)
+    private void changeCameraPosition(Vector delta, boolean relativeToCamera) {
+        if (relativeToCamera)
             delta = delta.rotateYP(camera.getYaw(), camera.getPitch());
 
         camera.setPosition(camera.getPosition().add(delta));
