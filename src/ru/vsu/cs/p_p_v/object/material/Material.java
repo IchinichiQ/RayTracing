@@ -1,8 +1,8 @@
-package ru.vsu.cs.p_p_v.object.matter;
+package ru.vsu.cs.p_p_v.object.material;
 
 import java.awt.*;
 
-public interface Matter {
+public interface Material {
     Color getColor();
 
     double getOpacity();

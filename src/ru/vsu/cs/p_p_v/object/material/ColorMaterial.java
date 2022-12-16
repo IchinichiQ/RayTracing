@@ -1,14 +1,14 @@
-package ru.vsu.cs.p_p_v.object.matter;
+package ru.vsu.cs.p_p_v.object.material;
 
 import java.awt.*;
 
-public class ColorMatter implements Matter {
+public class ColorMaterial implements Material {
     private Color color;
     private double opacity;
     private double reflective;
     private int phong;
 
-    public ColorMatter(Color color, double opacity, double reflective, int phong) {
+    public ColorMaterial(Color color, double opacity, double reflective, int phong) {
         this.color = color;
         this.opacity = opacity;
         this.reflective = reflective;

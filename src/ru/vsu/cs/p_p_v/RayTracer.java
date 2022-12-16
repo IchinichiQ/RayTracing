@@ -3,18 +3,18 @@ package ru.vsu.cs.p_p_v;
 import ru.vsu.cs.p_p_v.light.AmbientLight;
 import ru.vsu.cs.p_p_v.light.Light;
 import ru.vsu.cs.p_p_v.light.PointLight;
-import ru.vsu.cs.p_p_v.object.Material;
+import ru.vsu.cs.p_p_v.object.AbstractObject;
 import ru.vsu.cs.p_p_v.object.Traceable;
-import ru.vsu.cs.p_p_v.object.matter.ColorMatter;
-import ru.vsu.cs.p_p_v.object.matter.Matter;
+import ru.vsu.cs.p_p_v.object.material.ColorMaterial;
+import ru.vsu.cs.p_p_v.object.material.Material;
 
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 
-public class RayTracer
-{
-    private static final boolean SHADOWS = false;
-
+public class RayTracer {
     private static final Pixel EMPTY_PIXEL = new Pixel(77, 143, 172);
+    private static final Pixel DEFAULT_PIXEL = new Pixel(0, 0, 0);
 
     private final Scene scene;
 
@@ -22,117 +22,98 @@ public class RayTracer
 
     private final Light[] lights;
 
-    public RayTracer(Scene scene)
-    {
+    private final double MIN_T = Math.ulp(1.0);
+
+    public RayTracer(Scene scene) {
         this.scene = scene;
 
         objects = this.scene.getObjects().toArray(new Traceable[0]);
         lights = this.scene.getLights().toArray(new Light[0]);
     }
 
-    public void trace(Canvas canvas, Camera camera, int depth)
-    {
+    public void trace(Canvas canvas, Camera camera, int depth) {
         int canvasHeight = canvas.getHeight();
         int canvasWidth = canvas.getWidth();
 
-        for (int y = -canvasHeight / 2; y < canvasHeight / 2; y++)
-        {
-            for (int x = -canvasWidth / 2; x < canvasWidth / 2; x++)
-            {
+        for (int y = -canvasHeight / 2; y < canvasHeight / 2; y++) {
+            for (int x = -canvasWidth / 2; x < canvasWidth / 2; x++) {
                 Vector u = new Vector(camera.getPosition());
-                // Z - fov
-                // x -
                 Vector v = canvasToViewport(x, y, canvasHeight, canvasWidth);
                 v = v.rotateYP(camera.getYaw(), camera.getPitch());
-                //v = cameraRotation.multiply(v);
 
-                canvas.setPixel(x, y, getPixel(u, v, null, depth).getRGB());
+                canvas.setPixel(x, y, getPixel(u, v, depth, null).getRGB());
             }
         }
     }
 
     private Vector canvasToViewport(double x, double y, int cHeight, int cWidth) {
-        return new Vector((x / cWidth) * ((double) cWidth / cHeight), y /  cHeight, 1);
+        return new Vector((x / cWidth) * ((double) cWidth / cHeight), y / cHeight, 1);
     }
 
-    private Pixel getPixel(Vector u, Vector v, Traceable current, int depth)
-    {
+    private Pixel getPixel(Vector u, Vector v, int depth, Traceable ignore) {
         Traceable closest = null;
-        double minT = Double.MAX_VALUE;
 
-        double t;
+        double closestT = Double.MAX_VALUE;
+        for (Traceable object : objects) {
+            if (object == ignore)
+                continue;
 
-        for (Traceable object : objects)
-        {
-            if (object != current)
-            {
-                t = object.getIntersection(u, v);
-
-                if (!Double.isNaN(t) && (t < minT))
-                {
-                    minT = t;
-                    closest = object;
-                }
+            double t = object.getIntersection(u, v);
+            if (!Double.isNaN(t) && t > MIN_T && t < closestT) {
+                closestT = t;
+                closest = object;
             }
         }
 
         if (closest == null)
-        {
             return EMPTY_PIXEL;
-        }
 
         // p = u + v t_min
-        Vector p = v.multiply(minT);
-        p = p.add(u);
+        Vector p = v.multiply(closestT).add(u);
 
         // n = unit normal at p
-        Vector n = closest.getNormal(p);
-        n = n.normalize();
+        Vector n = closest.getNormal(p).normalize();
 
-        Matter matter;
-        if (closest instanceof Material) {
-            matter = ((Material) closest).getMatter();
-        } else {
-            matter = new ColorMatter(Color.BLACK, 1.0, 0.0, 0);
+        Material material = closest.getMaterial();
+
+        Pixel pixel = applyLight(v.normalize(), p, n, material);
+
+        pixel = pixel.scale(material.getColor());
+
+        double reflective = material.getReflective();
+        if (reflective > 0 && depth > 0) {
+            // v = v - (2*v.n)n
+            Vector vRef = v.subtract(2 * v.dot(n), n);
+
+            int nearRGB = getPixel(p, vRef, depth - 1, null).getRGB();
+
+            pixel = pixel.multiply(1.0 - reflective);
+            Pixel nearPixel = new Pixel(nearRGB).multiply(reflective);
+
+            pixel = pixel.mix(nearPixel.getRGB(), 1.0);
         }
 
-        Pixel pixel = new Pixel(0, 0, 0);
-        pixel = applyLight(v.normalize(), p, n, closest, matter);
+        double opacity = material.getOpacity();
+        if (opacity > 0.0) {
+            int nextRGB = getPixel(u, v, depth, closest).getRGB();
 
-        pixel = pixel.scale(matter.getColor());
+            pixel = pixel.multiply(1.0 - opacity);
+            Pixel nextPixel = new Pixel(nextRGB).multiply(opacity);
 
-        double reflective = matter.getReflective();
-
-        if (reflective == 0 || depth == 0)
-        {
-            return pixel;
+            pixel = pixel.mix(nextPixel.getRGB(), 1.0);
         }
-
-        // u = p
-        u = p;
-
-        // v = v - (2*v.n)n
-        v = v.subtract(2 * v.dot(n), n);
-
-        int nearRGB = getPixel(u, v, closest, depth - 1).getRGB();
-
-        pixel = pixel.multiply(1.0 - reflective);
-        Pixel nearPixel = new Pixel(nearRGB).multiply(reflective);
-
-        pixel = pixel.mix(nearPixel.getRGB(), 1.0);
 
         return pixel;
     }
 
-    private Pixel applyLight(Vector u, Vector p, Vector n, Traceable closest, Matter matter)
-    {
-        Pixel pixel = new Pixel(0, 0, 0, 255);
+    private Pixel applyLight(Vector u, Vector p, Vector n, Material material) {
+        Pixel pixel = DEFAULT_PIXEL;
 
         // set u = unit(v) for phong
-        int phong = matter.getPhong();
+        int phong = material.getPhong();
+        double opacity = material.getOpacity();
 
-        for (Light light : lights)
-        {
+        for (Light light : lights) {
             if (light instanceof AmbientLight) {
                 pixel = pixel.mix(light.getColor(), light.getIntensity());
                 continue;
@@ -142,63 +123,70 @@ public class RayTracer
             // TODO: Hardcoded point light
             Vector l = ((PointLight) light).getPosition().subtract(p);
 
+            List<Traceable> intersectedObjects = allIntersects(p, l, 1.0);
+            boolean allOpacityObjects = true;
+            double totalOpacity = 1.0;
+            for (Traceable currObject : intersectedObjects) {
+                if (currObject.getMaterial().getOpacity() == 0.0) {
+                    allOpacityObjects = false;
+                    break;
+                } else {
+                    totalOpacity *= currObject.getMaterial().getOpacity();
+                }
+            }
+
             // If not in shadow
-            if (!intersects(p, l, closest, 1.0))
-            {
+            if (intersectedObjects.size() == 0 || allOpacityObjects) {
                 l = l.normalize();
 
-                pixel = applyDiffuse(pixel, light, n, l);
-                pixel = applyPhong(pixel, light, phong, u, n, l);
+                pixel = applyDiffuse(pixel, light, n, l, totalOpacity);
+                pixel = applyPhong(pixel, light, phong, u, n, l, totalOpacity);
             }
         }
 
         return pixel;
     }
 
-    private Pixel applyDiffuse(Pixel pixel, Light light, Vector n, Vector l)
-    {
+    private Pixel applyDiffuse(Pixel pixel, Light light, Vector n, Vector l, double opacity) {
         // diffuse reflection
         double d = n.dot(l);
         Pixel lightColorAdjusted = new Pixel(light.getColor());
         lightColorAdjusted = lightColorAdjusted.multiply(light.getIntensity());
 
-        if (d > 0)
-        {
-            pixel = pixel.mix(lightColorAdjusted.getColor(), d);
+        if (d > 0) {
+            pixel = pixel.mix(lightColorAdjusted.getColor(), d * opacity);
         }
 
         return pixel;
     }
 
-    private Pixel applyPhong(Pixel pixel, Light light, int phong, Vector u, Vector n, Vector l)
-    {
+    private Pixel applyPhong(Pixel pixel, Light light, int phong, Vector u, Vector n, Vector l, double opacity) {
         // phong illumination
         Pixel lightColorAdjusted = new Pixel(light.getColor());
         lightColorAdjusted = lightColorAdjusted.multiply(light.getIntensity());
 
-        if (phong > 0)
-        {
+        if (phong > 0) {
             double d = l.subtract(2 * l.dot(n), n).dot(u);
 
-            if (d > 0)
-            {
-                pixel = pixel.mix(lightColorAdjusted.getColor(), FastMath.pow(d, phong));
+            if (d > 0) {
+                pixel = pixel.mix(lightColorAdjusted.getColor(), FastMath.pow(d, phong) * opacity);
             }
         }
 
         return pixel;
     }
 
-    private boolean intersects(Vector u, Vector v, Traceable ignore, double tMax)
-    {
-        for (Traceable object : objects)
-        {
-            if (object != ignore && object.getIntersection(u, v) < tMax)
-            {
-                return true;
+    private List<Traceable> allIntersects(Vector u, Vector v, double tMax) {
+        // TODO: Sort by opacity
+        List<Traceable> intersectedObjects = new ArrayList<>();
+
+        for (Traceable object : objects) {
+            double t = object.getIntersection(u, v);
+            if (t > MIN_T && t < tMax) {
+                intersectedObjects.add(object);
             }
         }
 
-        return false;
+        return intersectedObjects;
     }
 }

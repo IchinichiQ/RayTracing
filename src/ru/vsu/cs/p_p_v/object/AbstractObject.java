@@ -1,15 +1,15 @@
 package ru.vsu.cs.p_p_v.object;
 
 import ru.vsu.cs.p_p_v.Vector;
-import ru.vsu.cs.p_p_v.object.matter.Matter;
+import ru.vsu.cs.p_p_v.object.material.Material;
 
-public abstract class AbstractObject implements Locatable, Traceable, Material {
+public abstract class AbstractObject implements Locatable, Traceable {
     private final Vector position;
-    private final Matter matter;
+    private final Material material;
 
-    public AbstractObject(Vector position, Matter material) {
+    public AbstractObject(Vector position, Material material) {
         this.position = position;
-        this.matter = material;
+        this.material = material;
     }
 
     @Override
@@ -17,7 +17,7 @@ public abstract class AbstractObject implements Locatable, Traceable, Material {
         return position;
     }
 
-    public Matter getMatter() {
-        return matter;
+    public Material getMaterial() {
+        return material;
     }
 }

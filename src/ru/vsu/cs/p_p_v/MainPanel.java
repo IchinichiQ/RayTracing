@@ -4,7 +4,7 @@ import ru.vsu.cs.p_p_v.light.AmbientLight;
 import ru.vsu.cs.p_p_v.light.PointLight;
 import ru.vsu.cs.p_p_v.object.Plane;
 import ru.vsu.cs.p_p_v.object.Sphere;
-import ru.vsu.cs.p_p_v.object.matter.ColorMatter;
+import ru.vsu.cs.p_p_v.object.material.ColorMaterial;
 
 import javax.swing.*;
 import java.awt.*;
@@ -43,18 +43,18 @@ public class MainPanel extends JPanel {
         });
 
         Scene scene = new Scene();
-        camera = new Camera(new Vector(0, 1, 0));
+        camera = new Camera(new Vector(1, 2.5, -1));
 
-        Plane ground = new Plane(new Vector(), new Vector(0, 1, 0), new ColorMatter(new Color(100, 230, 100), 0, 0, 0));
+        Plane ground = new Plane(new Vector(), new Vector(0, 1, 0), new ColorMaterial(new Color(100, 230, 100), 0.0, 0, 0));
         scene.addObject(ground);
 
-        Sphere s1 = new Sphere(new Vector(0, 3, 3), 1, new ColorMatter(Color.WHITE, 50, 0.0, 50));
+        Sphere s1 = new Sphere(new Vector(0, 3, 3), 1, new ColorMaterial(Color.WHITE, 0.0, 0.0, 50));
         scene.addObject(s1);
 
-        Sphere s2 = new Sphere(new Vector(0, 300, 2000), 100, new ColorMatter(Color.YELLOW, 50, 1.0, 0));
-        //scene.addObject(s2);
+        Sphere s2 = new Sphere(new Vector(1, 3, 1), 0.5, new ColorMaterial(Color.WHITE, 0.5, 0.0, 50));
+        scene.addObject(s2);
 
-        Sphere s3 = new Sphere(new Vector(2, 2, 2), 0.5, new ColorMatter(Color.BLUE, 50, 0.9, 50));
+        Sphere s3 = new Sphere(new Vector(2, 2, 2), 0.5, new ColorMaterial(Color.BLUE, 0.0, 0.9, 50));
         scene.addObject(s3);
 
         PointLight l1 = new PointLight(new Vector(0, 4, 1), 1.0, Color.RED);

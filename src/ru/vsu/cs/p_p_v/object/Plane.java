@@ -1,19 +1,15 @@
 package ru.vsu.cs.p_p_v.object;
 
 import ru.vsu.cs.p_p_v.Vector;
-import ru.vsu.cs.p_p_v.object.matter.Matter;
+import ru.vsu.cs.p_p_v.object.material.Material;
 
 public class Plane extends AbstractObject
 {
     private final Vector normal;
 
-    // ----------------------------------------------------------------------------------------------------------------
-    // constructors
-    // ----------------------------------------------------------------------------------------------------------------
-
-    public Plane(Vector position, Vector normal, Matter matter)
+    public Plane(Vector position, Vector normal, Material material)
     {
-        super(position, matter);
+        super(position, material);
 
         this.normal = normal;
     }

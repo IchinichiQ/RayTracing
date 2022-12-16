@@ -1,15 +1,15 @@
 package ru.vsu.cs.p_p_v.object;
 
 import ru.vsu.cs.p_p_v.Vector;
-import ru.vsu.cs.p_p_v.object.matter.Matter;
+import ru.vsu.cs.p_p_v.object.material.Material;
 
 public class Sphere extends AbstractObject {
     private final double r;
     private final double rSquare;
 
-    public Sphere(Vector position, double r, Matter matter)
+    public Sphere(Vector position, double r, Material material)
     {
-        super(position, matter);
+        super(position, material);
 
         this.r = r;
         this.rSquare = r * r;
