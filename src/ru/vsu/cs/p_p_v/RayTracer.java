@@ -3,12 +3,9 @@ package ru.vsu.cs.p_p_v;
 import ru.vsu.cs.p_p_v.light.AmbientLight;
 import ru.vsu.cs.p_p_v.light.Light;
 import ru.vsu.cs.p_p_v.light.PointLight;
-import ru.vsu.cs.p_p_v.object.AbstractObject;
 import ru.vsu.cs.p_p_v.object.Traceable;
-import ru.vsu.cs.p_p_v.object.material.ColorMaterial;
 import ru.vsu.cs.p_p_v.object.material.Material;
 
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,7 +19,7 @@ public class RayTracer {
 
     private final Light[] lights;
 
-    private final double MIN_T = Math.ulp(1.0);
+    private final double bias = 0.00001;
 
     public RayTracer(Scene scene) {
         this.scene = scene;
@@ -41,7 +38,7 @@ public class RayTracer {
                 Vector v = canvasToViewport(x, y, canvasHeight, canvasWidth);
                 v = v.rotateYP(camera.getYaw(), camera.getPitch());
 
-                canvas.setPixel(x, y, getPixel(u, v, depth, null).getRGB());
+                canvas.setPixel(x, y, getPixel(u, v, depth).getRGB());
             }
         }
     }
@@ -50,16 +47,13 @@ public class RayTracer {
         return new Vector((x / cWidth) * ((double) cWidth / cHeight), y / cHeight, 1);
     }
 
-    private Pixel getPixel(Vector u, Vector v, int depth, Traceable ignore) {
+    private Pixel getPixel(Vector u, Vector v, int depth) {
         Traceable closest = null;
 
         double closestT = Double.MAX_VALUE;
         for (Traceable object : objects) {
-            if (object == ignore)
-                continue;
-
             double t = object.getIntersection(u, v);
-            if (!Double.isNaN(t) && t > MIN_T && t < closestT) {
+            if (!Double.isNaN(t) && t < closestT && t > bias) {
                 closestT = t;
                 closest = object;
             }
@@ -85,7 +79,7 @@ public class RayTracer {
             // v = v - (2*v.n)n
             Vector vRef = v.subtract(2 * v.dot(n), n);
 
-            int nearRGB = getPixel(p, vRef, depth - 1, null).getRGB();
+            int nearRGB = getPixel(p, vRef, depth - 1).getRGB();
 
             pixel = pixel.multiply(1.0 - reflective);
             Pixel nearPixel = new Pixel(nearRGB).multiply(reflective);
@@ -95,7 +89,14 @@ public class RayTracer {
 
         double opacity = material.getOpacity();
         if (opacity > 0.0) {
-            int nextRGB = getPixel(u, v, depth, closest).getRGB();
+            Vector pos;
+            if (v.dot(n) < 0) {
+                pos = p.subtract(n.multiply(bias));
+            } else {
+                pos = p.add(n.multiply(bias));
+            }
+
+            int nextRGB = getPixel(pos, v.normalize(), depth).getRGB();
 
             pixel = pixel.multiply(1.0 - opacity);
             Pixel nextPixel = new Pixel(nextRGB).multiply(opacity);
@@ -138,6 +139,8 @@ public class RayTracer {
             // If not in shadow
             if (intersectedObjects.size() == 0 || allOpacityObjects) {
                 l = l.normalize();
+                if (opacity > 0.0 && intersectedObjects.size() > 0 && allOpacityObjects)
+                    l = l.multiply(-1);
 
                 pixel = applyDiffuse(pixel, light, n, l, totalOpacity);
                 pixel = applyPhong(pixel, light, phong, u, n, l, totalOpacity);
@@ -182,7 +185,7 @@ public class RayTracer {
 
         for (Traceable object : objects) {
             double t = object.getIntersection(u, v);
-            if (t > MIN_T && t < tMax) {
+            if (t < tMax && t > bias) {
                 intersectedObjects.add(object);
             }
         }

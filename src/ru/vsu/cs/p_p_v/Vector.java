@@ -39,9 +39,13 @@ public class Vector {
         return new Vector(x * s, y * s, z * s);
     }
 
+    public double getLength() {
+        return Math.sqrt(x * x + y * y + z * z);
+    }
+
     public Vector normalize()
     {
-        double mod = Math.sqrt(x * x + y * y + z * z);
+        double mod = getLength();
 
         return new Vector(x / mod, y / mod, z / mod);
     }

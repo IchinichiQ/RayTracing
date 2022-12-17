@@ -65,9 +65,12 @@ public class Sphere extends AbstractObject {
         double t2 = c / (a * t1);
 
         if (t1 < 0 && t2 < 0)
-        {
             return Double.NaN;
-        }
+
+        if (t1 < 0.00001)
+            return t2;
+        if (t2 < 0.00001)
+            return t1;
 
         return Math.min(t1, t2);
     }
