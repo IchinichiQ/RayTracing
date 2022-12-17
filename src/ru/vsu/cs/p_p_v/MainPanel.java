@@ -54,8 +54,11 @@ public class MainPanel extends JPanel {
         Sphere s2 = new Sphere(new Vector(1, 3, 1), 0.5, new ColorMaterial(Color.WHITE, 0.5, 0.0, 50));
         scene.addObject(s2);
 
-        Sphere s3 = new Sphere(new Vector(2, 2, 2), 0.5, new ColorMaterial(Color.BLUE, 0.0, 0.9, 50));
+        Sphere s3 = new Sphere(new Vector(2, 2, 2), 0.5, new ColorMaterial(Color.WHITE, 0.0, 1.0, 50));
         scene.addObject(s3);
+
+        Sphere s4 = new Sphere(new Vector(3, 3, 2), 0.5, new ColorMaterial(Color.WHITE, 0.0, 1.0, 50));
+        scene.addObject(s4);
 
         PointLight l1 = new PointLight(new Vector(0, 4, 1), 1.0, Color.RED);
         scene.addLight(l1);
