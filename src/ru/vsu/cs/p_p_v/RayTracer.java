@@ -8,6 +8,9 @@ import ru.vsu.cs.p_p_v.object.material.Material;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 public class RayTracer {
     private static final Pixel EMPTY_PIXEL = new Pixel(77, 143, 172);
@@ -32,7 +35,26 @@ public class RayTracer {
         int canvasHeight = canvas.getHeight();
         int canvasWidth = canvas.getWidth();
 
-        for (int y = -canvasHeight / 2; y < canvasHeight / 2; y++) {
+        int numThreads = Runtime.getRuntime().availableProcessors();
+        ExecutorService executorService = Executors.newFixedThreadPool(numThreads);
+
+        try {
+            for (int i = 0; i < numThreads; i++) {
+                final int threadIndex = i;
+                executorService.submit(() -> tracePart(canvas, camera, depth, canvasHeight, canvasWidth, numThreads, threadIndex));
+            }
+        } finally {
+            executorService.shutdown();
+            try {
+                executorService.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private void tracePart(Canvas canvas, Camera camera, int depth, int canvasHeight, int canvasWidth, int numThreads, int threadIndex) {
+        for (int y = -canvasHeight / 2 + threadIndex; y < canvasHeight / 2; y += numThreads) {
             for (int x = -canvasWidth / 2; x < canvasWidth / 2; x++) {
                 Vector u = new Vector(camera.getPosition());
                 Vector v = canvasToViewport(x, y, canvasHeight, canvasWidth);
@@ -137,9 +159,9 @@ public class RayTracer {
             }
 
             // If not in shadow
-            if (intersectedObjects.size() == 0 || allOpacityObjects) {
+            if (intersectedObjects.isEmpty() || allOpacityObjects) {
                 l = l.normalize();
-                if (opacity > 0.0 && intersectedObjects.size() > 0 && allOpacityObjects)
+                if (opacity > 0.0 && !intersectedObjects.isEmpty() && allOpacityObjects)
                     l = l.multiply(-1);
 
                 pixel = applyDiffuse(pixel, light, n, l, totalOpacity);
